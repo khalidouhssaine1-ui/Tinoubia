@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { enquirySchema, type EnquiryInput } from "@/lib/validations/enquiry.schema";
+import { notifyViaFormSubmit } from "@/lib/formsubmit-client";
 import { Controller } from "react-hook-form";
 
 interface EnquiryFormProps {
@@ -55,8 +56,26 @@ export function EnquiryForm({ propertyId, propertyTitle, propertyReference, prop
         body: JSON.stringify(values),
       });
       if (!res.ok) throw new Error("Request failed");
+      const data = (await res.json()) as { ok: boolean; emailed?: boolean };
       setStatus("success");
       reset({ preferredContact: "phone", propertyId, propertyTitle, propertyReference, propertyUrl, company: "" });
+
+      // If the server couldn't email (no provider configured), notify from the
+      // browser via FormSubmit — which passes its Cloudflare check here.
+      if (!data.emailed) {
+        void notifyViaFormSubmit(`New enquiry — ${propertyTitle} (${propertyReference})`, {
+          Name: values.fullName,
+          Phone: values.phone,
+          Email: values.email,
+          "Preferred contact": values.preferredContact,
+          "Visit date": values.visitDate || "—",
+          "Number of people": values.numPeople ? String(values.numPeople) : "—",
+          Message: values.message,
+          Property: propertyTitle,
+          Reference: propertyReference,
+          "Property URL": propertyUrl,
+        });
+      }
     } catch {
       setStatus("error");
     }

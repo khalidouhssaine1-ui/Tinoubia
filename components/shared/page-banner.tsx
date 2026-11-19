@@ -10,7 +10,7 @@ interface Crumb {
 
 export function PageBanner({ title, subtitle, breadcrumbs }: { title: string; subtitle?: string; breadcrumbs: Crumb[] }) {
   return (
-    <section className="relative flex h-72 items-end overflow-hidden bg-charcoal pb-8 pt-32 sm:h-80">
+    <section className="relative overflow-hidden bg-charcoal pb-8 pt-24 sm:pt-28">
       <JsonLd data={breadcrumbJsonLd(breadcrumbs)} />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(164,124,72,0.25),transparent_60%)]" />
       <div className="container-luxe relative z-10">

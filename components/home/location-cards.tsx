@@ -26,7 +26,7 @@ export async function LocationCards() {
           {neighborhoods.map((n, i) => (
             <Reveal key={n.id} delay={i * 0.06}>
               <Link
-                href={`/properties/location/${n.city.slug}/${n.slug}`}
+                href={`/properties/${n.slug}`}
                 className="group relative flex h-56 flex-col justify-end overflow-hidden rounded-2xl shadow-sm sm:h-64"
               >
                 <Image

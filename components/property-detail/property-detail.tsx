@@ -1,6 +1,7 @@
 import { Suspense } from "react";
+import Link from "next/link";
+import { ChevronRight, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { PageBanner } from "@/components/shared/page-banner";
 import { Gallery } from "@/components/property-detail/gallery";
 import { InfoTable } from "@/components/property-detail/info-table";
 import { AmenitiesList } from "@/components/property-detail/amenities-list";
@@ -12,7 +13,7 @@ import { SimilarProperties } from "@/components/property-detail/similar-properti
 import { incrementPropertyViews } from "@/lib/data/properties";
 import { formatPrice, LISTING_TYPE_LABEL, PROPERTY_STATUS_LABEL, RENTAL_TERM_LABEL } from "@/lib/utils";
 import { JsonLd } from "@/components/shared/json-ld";
-import { propertyJsonLd } from "@/lib/seo";
+import { propertyJsonLd, breadcrumbJsonLd } from "@/lib/seo";
 import type { PropertyWithRelations } from "@/types";
 
 export async function PropertyDetail({ property }: { property: PropertyWithRelations }) {
@@ -22,21 +23,47 @@ export async function PropertyDetail({ property }: { property: PropertyWithRelat
   const propertyUrl = `${siteUrl}/properties/${property.slug}`;
   const locationLabel = [property.neighborhood?.name, property.city?.name].filter(Boolean).join(", ");
   const fullAddress = property.show_full_address ? property.address : null;
+  const breadcrumbs = [
+    { label: "Home", href: "/" },
+    { label: "Properties", href: "/properties" },
+    { label: property.title },
+  ];
+
+  // Brochure button label follows the property category, e.g. "Download Villa Summary".
+  const CATEGORY_NOUN: Record<string, string> = {
+    apartments: "Apartment",
+    villas: "Villa",
+    riads: "Riad",
+  };
+  const brochureLabel = `Download ${CATEGORY_NOUN[property.property_type.slug] ?? property.property_type.name} Summary`;
 
   return (
     <>
       <JsonLd data={propertyJsonLd(property, propertyUrl)} />
-      <PageBanner
-        title={property.title}
-        subtitle={`Ref: ${property.reference}${locationLabel ? ` · ${locationLabel}` : ""}`}
-        breadcrumbs={[
-          { label: "Home", href: "/" },
-          { label: "Properties", href: "/properties" },
-          { label: property.title },
-        ]}
-      />
+      <JsonLd data={breadcrumbJsonLd(breadcrumbs)} />
 
-      <div className="container-luxe section-y !pt-10">
+      {/* Slim dark bar: keeps the fixed white header readable, then photos
+          appear immediately below (no tall hero banner). */}
+      <div className="bg-charcoal">
+        <div className="container-luxe pt-24 pb-4 sm:pt-28">
+          <nav className="flex flex-wrap items-center gap-1.5 text-xs text-ivory/60">
+            {breadcrumbs.map((crumb, i) => (
+              <span key={i} className="flex items-center gap-1.5">
+                {i > 0 && <ChevronRight className="size-3" />}
+                {crumb.href ? (
+                  <Link href={crumb.href} className="hover:text-ivory">
+                    {crumb.label}
+                  </Link>
+                ) : (
+                  <span className="line-clamp-1 text-ivory/90">{crumb.label}</span>
+                )}
+              </span>
+            ))}
+          </nav>
+        </div>
+      </div>
+
+      <div className="container-luxe pb-16 pt-6 md:pb-24">
         <Gallery media={property.media} title={property.title} />
 
         <div className="mt-10 grid grid-cols-1 gap-10 lg:grid-cols-[1fr_360px]">
@@ -72,6 +99,18 @@ export async function PropertyDetail({ property }: { property: PropertyWithRelat
                 </div>
               </div>
             </div>
+
+            {property.brochure_url && (
+              <a
+                href={property.brochure_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-xl bg-charcoal px-5 py-3 text-sm font-medium text-ivory transition-colors hover:bg-charcoal/90"
+              >
+                <FileText className="size-4" />
+                {brochureLabel}
+              </a>
+            )}
 
             <InfoTable property={property} />
 

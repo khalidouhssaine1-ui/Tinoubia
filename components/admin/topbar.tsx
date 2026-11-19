@@ -9,7 +9,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -58,10 +57,10 @@ export function AdminTopbar({ profile }: { profile: Profile }) {
           <span className="hidden text-sm sm:inline">{profile.full_name || profile.email}</span>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuLabel>
+          <div className="px-1.5 py-1">
             <p className="text-sm font-medium">{profile.full_name || "Admin"}</p>
-            <p className="text-xs font-normal capitalize text-muted-foreground">{profile.role.replace("_", " ")}</p>
-          </DropdownMenuLabel>
+            <p className="text-xs capitalize text-muted-foreground">{profile.role.replace("_", " ")}</p>
+          </div>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleSignOut} className="gap-2 text-destructive">
             <LogOut className="size-4" /> Sign Out

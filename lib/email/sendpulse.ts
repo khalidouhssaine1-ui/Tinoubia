@@ -5,7 +5,19 @@ const SENDPULSE_SMTP_URL = "https://api.sendpulse.com/smtp/emails";
 
 let cachedToken: { value: string; expiresAt: number } | null = null;
 
-async function getAccessToken(): Promise<string> {
+/**
+ * Resolves the Bearer token for the SendPulse API. Two supported credential
+ * styles:
+ *  - SENDPULSE_API_KEY (newer `sp_apikey_...`) — used directly as the Bearer
+ *    token, no OAuth exchange needed.
+ *  - SENDPULSE_API_USER_ID + SENDPULSE_API_SECRET (classic) — exchanged for a
+ *    short-lived OAuth access token.
+ */
+async function getBearerToken(): Promise<string> {
+  if (process.env.SENDPULSE_API_KEY) {
+    return process.env.SENDPULSE_API_KEY;
+  }
+
   if (cachedToken && cachedToken.expiresAt > Date.now()) {
     return cachedToken.value;
   }
@@ -40,15 +52,19 @@ interface SendEmailInput {
 }
 
 export async function sendTransactionalEmail({ to, subject, html }: SendEmailInput) {
-  if (!process.env.SENDPULSE_API_USER_ID || !process.env.SENDPULSE_API_SECRET) {
+  const hasCredentials =
+    Boolean(process.env.SENDPULSE_API_KEY) ||
+    (Boolean(process.env.SENDPULSE_API_USER_ID) && Boolean(process.env.SENDPULSE_API_SECRET));
+
+  if (!hasCredentials) {
     console.warn(
-      "[sendpulse] SENDPULSE_API_USER_ID / SENDPULSE_API_SECRET not configured — skipping email send.",
+      "[sendpulse] No SendPulse credentials configured (SENDPULSE_API_KEY or ID+SECRET) — skipping email send.",
       { subject, to },
     );
     return { skipped: true as const };
   }
 
-  const token = await getAccessToken();
+  const token = await getBearerToken();
 
   const res = await fetch(SENDPULSE_SMTP_URL, {
     method: "POST",

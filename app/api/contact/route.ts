@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { contactSchema } from "@/lib/validations/contact.schema";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isRateLimited } from "@/lib/rate-limit";
-import { sendTransactionalEmail } from "@/lib/email/sendpulse";
+import { sendNotificationEmail } from "@/lib/email/send";
 import { contactNotificationHtml } from "@/lib/email/templates";
 import { formatDate } from "@/lib/utils";
 
@@ -45,8 +45,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
 
+  let emailed = false;
   try {
-    await sendTransactionalEmail({
+    emailed = await sendNotificationEmail({
       to: [{ email: CONTACT_EMAIL }],
       subject: `New general enquiry from ${values.fullName}`,
       html: contactNotificationHtml({
@@ -61,5 +62,5 @@ export async function POST(request: NextRequest) {
     console.error("[contact] failed to send notification email", err);
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, emailed });
 }

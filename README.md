@@ -1,6 +1,6 @@
 # Tinoubia Immobilier
 
-A premium real-estate platform for apartment, villa and riad sales and rentals in Marrakech, Morocco — built with Next.js (App Router), TypeScript, Tailwind CSS, shadcn/ui, Supabase and Cloudinary.
+A premium real-estate platform for apartment, villa and riad sales and rentals in Marrakech and Agadir, Morocco — built with Next.js (App Router), TypeScript, Tailwind CSS, shadcn/ui, Supabase and Cloudinary.
 
 ## Stack
 
@@ -8,19 +8,22 @@ A premium real-estate platform for apartment, villa and riad sales and rentals i
 - **TypeScript**
 - **Tailwind CSS v4** + **shadcn/ui** (Base UI primitives)
 - **Supabase** — Postgres, Auth, Row Level Security
-- **Cloudinary** — signed uploads for property photos/videos
+- **Cloudinary** — signed uploads for property photos/videos and PDF brochures
 - **React Hook Form** + **Zod** — every form, client- and server-validated
-- **Google Maps JavaScript API** — property location picker (admin) and map views (public)
-- **SendPulse** — transactional email for enquiry notifications
+- **Google Maps JavaScript API** — property location picker (admin)
+- **Leaflet + OpenStreetMap** — public property maps and the listings map view (no API key)
+- **Email notifications** — Resend, Gmail SMTP or SendPulse server-side, with a FormSubmit fallback from the visitor's browser (see below)
 - **Framer Motion** — scroll reveals, page/drawer/modal transitions (respects `prefers-reduced-motion`)
 
 ## Getting Started
 
 ```bash
-npm install
+npm ci
 cp .env.local.example .env.local   # fill in the values below
 npm run dev
 ```
+
+Install dependencies on the machine you run the app on. `node_modules` contains platform-specific native binaries (Next.js SWC, Tailwind's oxide, lightningcss, sharp), so a folder installed on Windows won't run on macOS and vice versa — copy the project without `node_modules` and run `npm ci` again.
 
 Visit `http://localhost:3000` for the public site and `http://localhost:3000/admin` for the admin dashboard.
 
@@ -33,15 +36,22 @@ Copy `.env.local.example` to `.env.local` and fill in:
 | `NEXT_PUBLIC_SITE_URL` | Your deployed URL (`http://localhost:3000` in dev) |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase → Project Settings → API |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → Project Settings → API (publishable/anon key) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API → **service_role** secret. **Never expose this to the browser.** Required for the enquiry pipeline, newsletter signups, and admin user management. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API → **service_role** secret. **Never expose this to the browser.** Required for the contact-page form and admin user management. (Property enquiries don't need it — they insert through the public `leads_insert_public` RLS policy.) |
 | `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` | Cloudinary dashboard → Settings → API Keys |
-| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Google Cloud Console → enable "Maps JavaScript API" |
-| `SENDPULSE_API_USER_ID` / `SENDPULSE_API_SECRET` | SendPulse → Settings → API |
-| `SENDPULSE_SENDER_EMAIL` / `SENDPULSE_SENDER_NAME` | The verified sender identity in SendPulse |
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Google Cloud Console → enable "Maps JavaScript API" (admin location picker only) |
 | `CONTACT_EMAIL` | Where enquiry notifications are sent (defaults to `hmounayt17@gmail.com`) |
+| `RESEND_API_KEY` / `RESEND_FROM` | *Optional, email option 1.* Resend → API Keys; `RESEND_FROM` is the verified sender (defaults to Resend's onboarding address) |
+| `GMAIL_USER` / `GMAIL_APP_PASSWORD` | *Optional, email option 2.* A Gmail address and a Google App Password for it |
+| `SENDPULSE_API_KEY` or `SENDPULSE_API_USER_ID` + `SENDPULSE_API_SECRET` | *Optional, email option 3.* SendPulse → Settings → API |
+| `SENDPULSE_SENDER_EMAIL` / `SENDPULSE_SENDER_NAME` | The verified sender identity in SendPulse (the name is also used as the Gmail sender name) |
+| `NEXT_PUBLIC_FORMSUBMIT_EMAIL` | *Optional browser fallback.* Inbox that FormSubmit forwards notifications to when no server-side provider sent one |
 | `NEXT_PUBLIC_WHATSAPP_NUMBER` | Agency WhatsApp number, digits only with country code (e.g. `212600000000`) |
 
-Until Cloudinary/Google Maps/SendPulse keys are supplied, the app degrades gracefully: media upload shows a configuration notice, maps show a static fallback with a "view on Google Maps" link, and enquiry emails are skipped with a server-side warning (the enquiry itself is still saved to the database).
+### How enquiry emails are sent
+
+Every enquiry and contact message is saved to the `leads` table first, so nothing is lost if email fails. The notification then goes out through the first configured option in `lib/email/send.ts`: **Resend → Gmail SMTP → SendPulse**. If none of them sends it, the API answers `emailed: false` and the visitor's browser sends the notification through **FormSubmit** instead (FormSubmit blocks requests from server IPs, so it can only run client-side).
+
+Until Cloudinary/Google Maps/email keys are supplied, the app degrades gracefully: media upload shows a configuration notice, the admin location picker can't load, and enquiry emails fall through to FormSubmit or are skipped with a server-side warning (the enquiry itself is still saved to the database).
 
 ## Database
 
@@ -50,6 +60,10 @@ The Supabase project's schema lives in `supabase/migrations/`, applied in order:
 1. `0001_init_schema.sql` — tables, indexes, RLS policies, seed reference data (property types, amenities, Marrakech/Gueliz/Hivernage/Palmeraie/Medina)
 2. `0002_security_performance_fixes.sql` — advisor-driven hardening (missing FK indexes, `search_path` pinning, relocated `pg_trgm` extension, RLS performance patterns)
 3. `0003_views_rpc_and_demo_seed.sql` — the `increment_property_views` RPC, plus demo agents/testimonials/properties so the site isn't empty on first run
+4. `0004_rental_term_and_agadir.sql` — `rental_term` (short-term / long-term) on rentals, and Agadir as a second city
+5. `0005_allow_public_lead_inserts.sql` — lets anonymous visitors insert clean `new` website leads (reads stay staff-only)
+6. `0006_property_brochure.sql` — optional PDF brochure per property (`brochure_url`, `brochure_public_id`)
+7. `0007_instagram_videos.sql` — the `instagram_videos` table shown on the homepage
 
 Run them against a fresh Supabase project via the Supabase CLI (`supabase db push`) or the Supabase SQL editor, in order.
 
@@ -79,24 +93,28 @@ This project doesn't ship a seed super-admin (creating live login credentials is
 ```
 app/
   (public)/            Public site — homepage, listings, property detail, about, contact
-  admin/                Admin dashboard (protected by middleware + role checks)
-  api/                  Route handlers: enquiries, contact, newsletter, Cloudinary signing, CSV export
+  admin/                Admin dashboard (protected by proxy.ts + role checks)
+  api/                  Route handlers: enquiries, contact, Cloudinary signing, leads CSV export
   sitemap.ts, robots.ts
 components/
   layout/, home/, properties/, property-detail/, admin/, shared/, ui/ (shadcn primitives)
 lib/
-  supabase/             Browser/server/admin/middleware Supabase clients
-  actions/              Server Actions (properties, media, leads, locations, categories, users, settings)
+  supabase/             Browser/server/admin Supabase clients + the session refresh used by proxy.ts
+  actions/              Server Actions (properties, media, leads, locations, categories, users, settings, videos)
   data/                 Read-only data-fetching functions
   validations/          Zod schemas
-  cloudinary/, email/   Cloudinary signing + SendPulse email
+  cloudinary/, email/   Cloudinary signing + email providers (Resend, Gmail, SendPulse)
+proxy.ts                Next.js 16 proxy (formerly "middleware"): guards /admin/*
 supabase/migrations/    SQL migrations (source of truth for the schema)
 types/                  Domain types + generated Supabase types
 ```
 
 ## Notes on the brand assets
 
-`public/logo.png` was regenerated from the originally-supplied file: the source had a solid black background with no alpha channel and visible render-grain noise (not actually transparent, despite the filename's intent). `scripts/make-logo-transparent.mjs` and `scripts/denoise-logo-alpha.mjs` document the one-off, local, lossless reconstruction (no third-party service was used) that produced the current true-alpha PNG.
+`public/logo.png` is the TINOUBIA wordmark as a true-alpha PNG. The one-off, local scripts in `scripts/` (run with `node`, using `sharp`) document how the logo variants were produced:
+
+- `scripts/extract-logo-on-white.mjs` — turns the supplied dark-ink-on-white logo into a transparent PNG.
+- `scripts/crop-header-logo.mjs` — crops the header variants (`logo-header.png`, `logo-header-white.png`) to the skyline mark + wordmark, without the "IMMOBILIER" bar.
 
 ## Verification
 

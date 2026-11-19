@@ -30,8 +30,9 @@ export const MAIN_NAV: NavItem[] = [
   { label: "Contact", href: "/contact" },
 ];
 
-export const AGENCY_WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "212600000000";
-export const AGENCY_PHONE_DISPLAY = "+212 600 000 000";
+// wa.me needs digits only, country code, no "+". Env var overrides if set.
+export const AGENCY_WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "212607157847";
+export const AGENCY_PHONE_DISPLAY = "+212 607-157847";
 export const AGENCY_EMAIL = "hmounayt17@gmail.com";
 
 export function whatsappLink(message?: string) {

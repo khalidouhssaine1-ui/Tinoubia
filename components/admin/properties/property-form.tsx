@@ -50,7 +50,7 @@ export function PropertyForm({
           <LocationTab property={property} countries={countries} cities={cities} neighborhoods={neighborhoods} />
         </TabsContent>
         <TabsContent value="media">
-          <MediaTab propertyId={property.id} media={property.media} />
+          <MediaTab propertyId={property.id} media={property.media} brochureUrl={property.brochure_url} />
         </TabsContent>
         <TabsContent value="contact">
           <ContactTab property={property} agents={agents} />

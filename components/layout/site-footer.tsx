@@ -28,7 +28,7 @@ const columns = [
 export function SiteFooter() {
   return (
     <footer className="bg-charcoal text-ivory">
-      <div className="container-luxe grid gap-12 py-16 md:py-20 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
+      <div className="container-luxe grid gap-10 py-10 md:py-12 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
         <div>
           <Logo light variant="full" />
           <p className="mt-5 max-w-sm text-sm leading-relaxed text-ivory/60">
@@ -99,12 +99,10 @@ export function SiteFooter() {
 
       <div className="border-t border-white/10 py-6">
         <div className="container-luxe flex flex-col items-center justify-between gap-3 text-xs text-ivory/40 sm:flex-row">
-          <p>© {new Date().getFullYear()} Tinoubia Immobilier. All rights reserved.</p>
-          <div className="flex gap-5">
-            <Link href="/admin/login" className="hover:text-ivory/70">
-              Admin
-            </Link>
-          </div>
+          <p>
+            © {new Date().getFullYear()} Tinoubia Immobilier. All rights reserved.{" "}
+            <span className="text-bronze">by Groweb</span>
+          </p>
         </div>
       </div>
     </footer>

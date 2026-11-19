@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { contactSchema, type ContactInput } from "@/lib/validations/contact.schema";
+import { notifyViaFormSubmit } from "@/lib/formsubmit-client";
 
 export function ContactForm() {
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
@@ -28,8 +29,18 @@ export function ContactForm() {
         body: JSON.stringify(values),
       });
       if (!res.ok) throw new Error("Request failed");
+      const data = (await res.json()) as { ok: boolean; emailed?: boolean };
       setStatus("success");
       reset();
+
+      if (!data.emailed) {
+        void notifyViaFormSubmit(`New general enquiry from ${values.fullName}`, {
+          Name: values.fullName,
+          Phone: values.phone,
+          Email: values.email,
+          Message: values.message,
+        });
+      }
     } catch {
       setStatus("error");
     }

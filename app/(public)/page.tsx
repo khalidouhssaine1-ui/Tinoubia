@@ -6,14 +6,16 @@ import { WhyChooseUs } from "@/components/home/why-choose-us";
 import { AgencyPresentation } from "@/components/home/agency-presentation";
 import { Testimonials } from "@/components/home/testimonials";
 import { ContactCta } from "@/components/home/contact-cta";
+import { InstagramVideos } from "@/components/home/instagram-videos";
 import { getFeaturedProperties, getLatestProperties } from "@/lib/data/properties";
+import { getInstagramVideos } from "@/lib/data/videos";
 
 export default async function HomePage() {
-  const [featured, forSale, forRent, latest] = await Promise.all([
-    getFeaturedProperties(8),
-    getLatestProperties(4, "sale"),
-    getLatestProperties(4, "rent"),
-    getLatestProperties(8),
+  const [featured, forSale, forRent, videos] = await Promise.all([
+    getFeaturedProperties(10),
+    getLatestProperties(10, "sale"),
+    getLatestProperties(10, "rent"),
+    getInstagramVideos(8),
   ]);
 
   return (
@@ -29,6 +31,8 @@ export default async function HomePage() {
       />
 
       <CategoryCards />
+
+      <InstagramVideos videos={videos} />
 
       <PropertySection
         eyebrow="For Sale"
@@ -54,15 +58,6 @@ export default async function HomePage() {
       <AgencyPresentation />
 
       <Testimonials />
-
-      <PropertySection
-        eyebrow="Just Listed"
-        title="Latest Properties"
-        subtitle="The newest additions to the Tinoubia collection."
-        properties={latest}
-        viewAllHref="/properties?sort=newest"
-        tone="muted"
-      />
 
       <ContactCta />
     </>

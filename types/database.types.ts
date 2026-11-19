@@ -349,6 +349,30 @@ export type Database = {
           },
         ]
       }
+      instagram_videos: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          position: number
+          url: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          position?: number
+          url: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          position?: number
+          url?: string
+        }
+        Relationships: []
+      }
       newsletter_subscribers: {
         Row: {
           created_at: string
@@ -457,6 +481,8 @@ export type Database = {
           longitude: number | null
           neighborhood_id: string | null
           og_image: string | null
+          brochure_url: string | null
+          brochure_public_id: string | null
           price: number
           property_type_id: string
           published_at: string | null
@@ -496,6 +522,8 @@ export type Database = {
           longitude?: number | null
           neighborhood_id?: string | null
           og_image?: string | null
+          brochure_url?: string | null
+          brochure_public_id?: string | null
           price: number
           property_type_id: string
           published_at?: string | null
@@ -535,6 +563,8 @@ export type Database = {
           longitude?: number | null
           neighborhood_id?: string | null
           og_image?: string | null
+          brochure_url?: string | null
+          brochure_public_id?: string | null
           price?: number
           property_type_id?: string
           published_at?: string | null

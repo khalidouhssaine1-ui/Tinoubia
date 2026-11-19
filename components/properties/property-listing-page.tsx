@@ -1,9 +1,9 @@
-import { PageBanner } from "@/components/shared/page-banner";
+import { BreadcrumbBar } from "@/components/shared/breadcrumb-bar";
 import { PropertyFiltersPanel } from "@/components/properties/property-filters";
 import { PropertyToolbar } from "@/components/properties/property-toolbar";
 import { PropertyResults } from "@/components/properties/property-results";
 import { PaginationControls } from "@/components/properties/pagination-controls";
-import { queryPropertiesWithAmenities } from "@/lib/data/properties";
+import { queryProperties } from "@/lib/data/properties";
 import type { PropertyFilters } from "@/types";
 
 interface Crumb {
@@ -28,14 +28,19 @@ export async function PropertyListingPage({
   lockListingType?: boolean;
   lockCategory?: boolean;
 }) {
-  const { data, count, page, pageSize } = await queryPropertiesWithAmenities({ ...filters, pageSize: 12 });
+  const { data, count, page, pageSize } = await queryProperties({ ...filters, pageSize: 12 });
   const totalPages = Math.max(1, Math.ceil(count / pageSize));
 
   return (
     <>
-      <PageBanner title={title} subtitle={subtitle} breadcrumbs={breadcrumbs} />
+      <BreadcrumbBar breadcrumbs={breadcrumbs} />
 
-      <div className="container-luxe section-y !pt-10">
+      <div className="container-luxe section-y !pt-8">
+        <div className="mb-8">
+          <h1 className="font-heading text-3xl text-charcoal sm:text-4xl">{title}</h1>
+          {subtitle && <p className="mt-2 max-w-xl text-muted-foreground">{subtitle}</p>}
+        </div>
+
         <div className="flex flex-col gap-8 lg:flex-row">
           <PropertyFiltersPanel
             basePath={basePath}

@@ -31,6 +31,6 @@ export function createSignedUploadParams(folder = "tinoubia/properties"): Signed
   };
 }
 
-export async function deleteCloudinaryAsset(publicId: string, resourceType: "image" | "video") {
+export async function deleteCloudinaryAsset(publicId: string, resourceType: "image" | "video" | "raw") {
   await cloudinary.uploader.destroy(publicId, { resource_type: resourceType, invalidate: true });
 }

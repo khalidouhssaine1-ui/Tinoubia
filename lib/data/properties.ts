@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { toSafeSearchTerm } from "@/lib/utils";
 import type {
   Feature,
   ListingType,
@@ -47,6 +48,40 @@ function mapProperty(row: RawPropertyRow): PropertyWithRelations {
 
 const PAGE_SIZE_DEFAULT = 12;
 
+/** Amenity filters exposed in the listing UI; each maps to a `features.slug`. */
+const AMENITY_FILTERS = ["pool", "garden", "terrace", "parking"] as const;
+type AmenitySlug = (typeof AMENITY_FILTERS)[number];
+
+type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
+
+/**
+ * IDs of properties that have every one of the given amenities. Amenities live
+ * in the property_features join table, so they're resolved first and fed into
+ * the main listing query as an id filter — that keeps pagination and the total
+ * count correct (narrowing after `.range()` left pages short or empty). RLS on
+ * property_features already limits this to publicly visible properties.
+ */
+async function getPropertyIdsWithAllFeatures(
+  supabase: SupabaseServerClient,
+  slugs: readonly AmenitySlug[],
+): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("property_features")
+    .select("property_id, feature:features!inner(slug)")
+    .in("feature.slug", [...slugs]);
+  if (error) throw error;
+
+  const found = new Map<string, Set<string>>();
+  for (const row of (data ?? []) as unknown as { property_id: string; feature: { slug: string } | null }[]) {
+    if (!row.feature) continue;
+    const set = found.get(row.property_id) ?? new Set<string>();
+    set.add(row.feature.slug);
+    found.set(row.property_id, set);
+  }
+
+  return [...found].filter(([, set]) => set.size === slugs.length).map(([id]) => id);
+}
+
 export interface QueryPropertiesResult {
   data: PropertyWithRelations[];
   count: number;
@@ -83,7 +118,16 @@ export async function queryProperties(
   if (filters.maxArea) query = query.lte("living_area", filters.maxArea);
   if (filters.furnished) query = query.eq("furnished", true);
   if (filters.featuredOnly) query = query.eq("featured", true);
-  if (filters.query) query = query.or(`title.ilike.%${filters.query}%,description.ilike.%${filters.query}%`);
+
+  const search = filters.query ? toSafeSearchTerm(filters.query) : "";
+  if (search) query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
+
+  const amenities = AMENITY_FILTERS.filter((slug) => filters[slug]);
+  if (amenities.length > 0) {
+    const ids = await getPropertyIdsWithAllFeatures(supabase, amenities);
+    if (ids.length === 0) return { data: [], count: 0, page, pageSize };
+    query = query.in("id", ids);
+  }
 
   if (filters.availableOnly) {
     query = query.eq("status", "available");
@@ -119,24 +163,6 @@ export async function queryProperties(
     count: count ?? 0,
     page,
     pageSize,
-  };
-}
-
-// Feature filters (pool/garden/terrace/parking) need a post-fetch narrow since
-// they live in a join table — cheap here given the catalog size this project
-// targets; revisit with a dedicated RPC if the catalog grows into the thousands.
-export async function queryPropertiesWithAmenities(
-  filters: PropertyFilters & { pageSize?: number },
-): Promise<QueryPropertiesResult> {
-  const result = await queryProperties(filters);
-  const wanted = ["pool", "garden", "terrace", "parking"].filter(
-    (slug) => filters[slug as "pool" | "garden" | "terrace" | "parking"],
-  );
-  if (wanted.length === 0) return result;
-
-  return {
-    ...result,
-    data: result.data.filter((p) => wanted.every((slug) => p.features.some((f) => f.slug === slug))),
   };
 }
 

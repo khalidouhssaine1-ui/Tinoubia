@@ -131,3 +131,59 @@ export async function updatePropertyMediaMeta(
   revalidatePath(`/admin/properties/${propertyId}/edit`);
   return { success: true };
 }
+
+export async function setPropertyBrochure(
+  propertyId: string,
+  brochure: { url: string; publicId: string },
+): Promise<ActionResult> {
+  const profile = await requireProfile();
+  const supabase = await createClient();
+
+  // Remove any previous brochure asset from Cloudinary so replacements don't orphan files.
+  const { data: existing } = await supabase
+    .from("properties")
+    .select("brochure_public_id")
+    .eq("id", propertyId)
+    .maybeSingle();
+
+  const prevId = (existing as { brochure_public_id: string | null } | null)?.brochure_public_id;
+  if (prevId && prevId !== brochure.publicId) {
+    await deleteCloudinaryAsset(prevId, "raw").catch(() => {});
+  }
+
+  const { error } = await supabase
+    .from("properties")
+    .update({ brochure_url: brochure.url, brochure_public_id: brochure.publicId } as never)
+    .eq("id", propertyId);
+
+  if (error) return { success: false, error: error.message };
+
+  await logActivity(profile.id, "set_brochure", "property", propertyId);
+  revalidatePath(`/admin/properties/${propertyId}/edit`);
+  return { success: true };
+}
+
+export async function removePropertyBrochure(propertyId: string): Promise<ActionResult> {
+  const profile = await requireProfile();
+  const supabase = await createClient();
+
+  const { data: existing } = await supabase
+    .from("properties")
+    .select("brochure_public_id")
+    .eq("id", propertyId)
+    .maybeSingle();
+
+  const prevId = (existing as { brochure_public_id: string | null } | null)?.brochure_public_id;
+  if (prevId) await deleteCloudinaryAsset(prevId, "raw").catch(() => {});
+
+  const { error } = await supabase
+    .from("properties")
+    .update({ brochure_url: null, brochure_public_id: null } as never)
+    .eq("id", propertyId);
+
+  if (error) return { success: false, error: error.message };
+
+  await logActivity(profile.id, "remove_brochure", "property", propertyId);
+  revalidatePath(`/admin/properties/${propertyId}/edit`);
+  return { success: true };
+}

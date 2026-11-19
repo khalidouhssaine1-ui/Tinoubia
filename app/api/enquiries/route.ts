@@ -1,8 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { enquirySchema } from "@/lib/validations/enquiry.schema";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { isRateLimited } from "@/lib/rate-limit";
-import { sendTransactionalEmail } from "@/lib/email/sendpulse";
+import { sendNotificationEmail } from "@/lib/email/send";
 import { enquiryNotificationHtml } from "@/lib/email/templates";
 import { formatDate } from "@/lib/utils";
 
@@ -30,7 +30,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  const supabase = createAdminClient();
+  // Server-side anon client. The public lead-insert RLS policy accepts clean
+  // "new" submissions without needing the service-role key; reads stay locked.
+  const supabase = await createClient();
 
   const { data: property } = await supabase
     .from("properties")
@@ -51,6 +53,7 @@ export async function POST(request: NextRequest) {
     visit_date: values.visitDate || null,
     num_people: values.numPeople ?? null,
     message: values.message,
+    status: "new",
     source: "website",
     ip_address: ip,
   });
@@ -65,8 +68,9 @@ export async function POST(request: NextRequest) {
     (property as unknown as { city?: { name: string } | null }).city?.name,
   ].filter(Boolean);
 
+  let emailed = false;
   try {
-    await sendTransactionalEmail({
+    emailed = await sendNotificationEmail({
       to: [{ email: CONTACT_EMAIL }],
       subject: `New enquiry — ${values.propertyTitle} (${values.propertyReference})`,
       html: enquiryNotificationHtml({
@@ -90,5 +94,7 @@ export async function POST(request: NextRequest) {
     console.error("[enquiries] failed to send notification email", err);
   }
 
-  return NextResponse.json({ ok: true });
+  // `emailed: false` tells the browser to send the notification via FormSubmit
+  // (which must run client-side to pass its Cloudflare bot check).
+  return NextResponse.json({ ok: true, emailed });
 }

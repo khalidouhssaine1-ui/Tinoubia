@@ -134,6 +134,8 @@ export interface Property {
   seo_title: string | null;
   seo_description: string | null;
   og_image: string | null;
+  brochure_url: string | null;
+  brochure_public_id: string | null;
   views_count: number;
   created_by: string | null;
   created_at: string;
@@ -173,6 +175,14 @@ export interface LeadNote {
   lead_id: string;
   author_id: string | null;
   note: string;
+  created_at: string;
+}
+
+export interface InstagramVideo {
+  id: string;
+  url: string;
+  caption: string | null;
+  position: number;
   created_at: string;
 }
 

@@ -26,6 +26,21 @@ export function slugify(input: string) {
     .replace(/^-+|-+$/g, "")
 }
 
+/**
+ * Makes free-text search safe to embed in a Supabase/PostgREST `.or()` filter
+ * string. Commas, parentheses, quotes and backslashes are filter syntax there,
+ * so a search like "villa, pool" would otherwise break the query or add extra
+ * clauses. LIKE wildcards (% _ *) are dropped so the term matches literally.
+ * Returns "" when nothing searchable is left — callers should skip the filter.
+ */
+export function toSafeSearchTerm(input: string, maxLength = 100) {
+  return input
+    .replace(/[,()"\\%_*]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, maxLength)
+}
+
 export function generatePropertySlug(title: string, city: string, listingType: "sale" | "rent", reference: string) {
   const action = listingType === "sale" ? "a-vendre" : "a-louer"
   return slugify(`${title}-${action}-${city}-ref-${reference.replace(/\D/g, "")}`)

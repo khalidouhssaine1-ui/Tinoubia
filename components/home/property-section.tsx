@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { PropertyCard } from "@/components/properties/property-card";
+import { PropertyCarousel } from "@/components/home/property-carousel";
 import { Reveal } from "@/components/shared/reveal";
 import type { PropertyWithRelations } from "@/types";
 
@@ -39,13 +39,9 @@ export function PropertySection({
           </Link>
         </Reveal>
 
-        <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {properties.map((property, i) => (
-            <Reveal key={property.id} delay={i * 0.06}>
-              <PropertyCard property={property} priority={i < 2} />
-            </Reveal>
-          ))}
-        </div>
+        <Reveal className="mt-10">
+          <PropertyCarousel properties={properties} />
+        </Reveal>
       </div>
     </section>
   );

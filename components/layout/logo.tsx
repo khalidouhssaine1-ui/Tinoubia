@@ -35,7 +35,7 @@ export function Logo({
         alt="Tinoubia Immobilier"
         width={source.width}
         height={source.height}
-        className={cn("w-auto object-contain", variant === "header" ? "h-14" : "h-24")}
+        className={cn("w-auto object-contain", variant === "header" ? "h-14" : "h-24 sm:h-28")}
         priority
         unoptimized
       />

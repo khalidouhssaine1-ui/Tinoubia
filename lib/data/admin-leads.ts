@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { toSafeSearchTerm } from "@/lib/utils";
 import type { Agent, Lead, LeadNote, Profile, Property } from "@/types";
 
 export interface LeadFilters {
@@ -14,7 +15,8 @@ export async function getLeads(filters: LeadFilters = {}) {
     .order("created_at", { ascending: false });
 
   if (filters.status) query = query.eq("status", filters.status);
-  if (filters.query) query = query.or(`full_name.ilike.%${filters.query}%,email.ilike.%${filters.query}%,phone.ilike.%${filters.query}%`);
+  const search = filters.query ? toSafeSearchTerm(filters.query) : "";
+  if (search) query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
 
   const { data, error } = await query;
   if (error) throw error;

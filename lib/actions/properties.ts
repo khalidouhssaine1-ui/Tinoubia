@@ -132,6 +132,15 @@ export async function deleteProperty(id: string): Promise<ActionResult> {
     await deleteCloudinaryAsset(item.cloudinary_public_id, item.resource_type as "image" | "video").catch(() => {});
   }
 
+  // Also remove the property's brochure PDF from Cloudinary, if any.
+  const { data: brochure } = await supabase
+    .from("properties")
+    .select("brochure_public_id")
+    .eq("id", id)
+    .maybeSingle();
+  const brochureId = (brochure as { brochure_public_id: string | null } | null)?.brochure_public_id;
+  if (brochureId) await deleteCloudinaryAsset(brochureId, "raw").catch(() => {});
+
   const { error } = await supabase.from("properties").delete().eq("id", id);
   if (error) return { success: false, error: error.message };
 
@@ -149,8 +158,8 @@ export async function duplicateProperty(id: string): Promise<ActionResult> {
 
   const { data: features } = await supabase.from("property_features").select("feature_id").eq("property_id", id);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructured only to exclude these from `rest`
-  const { id: _oldId, reference: _reference, slug: _slug, created_at: _createdAt, updated_at: _updatedAt, published_at: _publishedAt, views_count: _viewsCount, ...rest } = source;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructured only to exclude these from `rest` (brochure excluded so the copy doesn't share/orphan the original's PDF asset)
+  const { id: _oldId, reference: _reference, slug: _slug, created_at: _createdAt, updated_at: _updatedAt, published_at: _publishedAt, views_count: _viewsCount, brochure_url: _brochureUrl, brochure_public_id: _brochurePublicId, ...rest } = source;
 
   const newSlug = `${slugify(source.title)}-copy-${nanoid(6)}`;
 

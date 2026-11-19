@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
-import { MapPin } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { loadLeaflet } from "@/lib/leaflet-loader";
 
-const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-const DEFAULT_CENTER = { lat: 31.6295, lng: -7.9811 }; // Marrakech
+const DEFAULT_CENTER: [number, number] = [31.6295, -7.9811]; // Marrakech
 
+/**
+ * Free, no-API-key click-to-pick location picker (Leaflet + OpenStreetMap, CDN).
+ * Clicking the map drops/moves the pin and reports lat/lng to the form.
+ */
 export function MapPicker({
   latitude,
   longitude,
@@ -17,47 +19,56 @@ export function MapPicker({
   onChange: (lat: number, lng: number) => void;
 }) {
   const mapRef = useRef<HTMLDivElement>(null);
-  const [error, setError] = useState(false);
 
   useEffect(() => {
-    if (!API_KEY || !mapRef.current) return;
+    if (!mapRef.current) return;
     let cancelled = false;
-    setOptions({ key: API_KEY, v: "weekly" });
+    let map: import("leaflet").Map | null = null;
 
-    Promise.all([importLibrary("maps"), importLibrary("marker")])
-      .then(([{ Map }, { AdvancedMarkerElement }]) => {
+    loadLeaflet()
+      .then((L) => {
         if (cancelled || !mapRef.current) return;
 
-        const center = latitude != null && longitude != null ? { lat: latitude, lng: longitude } : DEFAULT_CENTER;
-        const map = new Map(mapRef.current, { center, zoom: 13, mapId: "tinoubia-map-picker" });
+        const hasPos = latitude != null && longitude != null;
+        const center: [number, number] = hasPos ? [Number(latitude), Number(longitude)] : DEFAULT_CENTER;
+        map = L.map(mapRef.current).setView(center, hasPos ? 14 : 12);
 
-        const marker = new AdvancedMarkerElement({
-          position: latitude != null && longitude != null ? center : undefined,
-          map,
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+          maxZoom: 19,
+        }).addTo(map);
+
+        const icon = L.divIcon({
+          className: "",
+          html: `<svg width="32" height="32" viewBox="0 0 24 24" fill="#A47C48" stroke="#151816" stroke-width="1" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7z"/><circle cx="12" cy="9" r="2.5" fill="#F5F1E8" stroke="none"/></svg>`,
+          iconSize: [32, 32],
+          iconAnchor: [16, 30],
         });
 
-        map.addListener("click", (e: google.maps.MapMouseEvent) => {
-          if (!e.latLng) return;
-          marker.position = e.latLng;
-          onChange(e.latLng.lat(), e.latLng.lng());
+        let currentMarker = hasPos ? L.marker(center, { icon }).addTo(map) : null;
+
+        map.on("click", (e: import("leaflet").LeafletMouseEvent) => {
+          const { lat, lng } = e.latlng;
+          if (currentMarker) currentMarker.setLatLng([lat, lng]);
+          else currentMarker = L.marker([lat, lng], { icon }).addTo(map!);
+          onChange(lat, lng);
         });
+
+        setTimeout(() => map?.invalidateSize(), 0);
       })
-      .catch(() => setError(true));
+      .catch((err) => console.error("[map-picker] Leaflet init failed:", err));
 
     return () => {
       cancelled = true;
+      if (map) map.remove();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (!API_KEY || error) {
-    return (
-      <div className="flex h-64 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border text-sm text-muted-foreground">
-        <MapPin className="size-5 text-bronze" />
-        Map picker requires a Google Maps API key. Enter latitude/longitude manually below.
-      </div>
-    );
-  }
-
-  return <div ref={mapRef} className="h-64 w-full overflow-hidden rounded-xl sm:h-80" />;
+  return (
+    <div>
+      <div ref={mapRef} className="h-64 w-full overflow-hidden rounded-xl border border-border sm:h-80" />
+      <p className="mt-1.5 text-xs text-muted-foreground">Click on the map to set the property location.</p>
+    </div>
+  );
 }

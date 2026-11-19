@@ -2,10 +2,11 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 /**
- * Refreshes the Supabase session cookie on every request and redirects
- * unauthenticated visitors away from /admin (except /admin/login).
+ * Called from the root proxy.ts on every /admin request: refreshes the
+ * Supabase session cookie and redirects unauthenticated visitors away from
+ * /admin (except /admin/login).
  * This is the server-side gate — page/layout code re-checks role on top of it,
- * so this middleware is not the only line of defense, just the first one.
+ * so this proxy is not the only line of defense, just the first one.
  */
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
