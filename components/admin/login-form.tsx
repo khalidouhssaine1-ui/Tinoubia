@@ -25,10 +25,28 @@ export function LoginForm() {
   async function onSubmit(values: LoginInput) {
     setServerError(null);
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword(values);
+    const { data, error } = await supabase.auth.signInWithPassword(values);
 
     if (error) {
       setServerError("Invalid email or password.");
+      return;
+    }
+
+    // The admin only lets in accounts with an active staff profile. Without
+    // this check, such an account would be bounced straight back here with
+    // no explanation.
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("is_active")
+      .eq("id", data.user.id)
+      .maybeSingle();
+    if (!profile || !profile.is_active) {
+      await supabase.auth.signOut();
+      setServerError(
+        profile
+          ? "This account has been deactivated. Ask the agency's super admin to reactivate it."
+          : "This account has no admin access yet. Ask the agency's super admin to add it under Users.",
+      );
       return;
     }
 
