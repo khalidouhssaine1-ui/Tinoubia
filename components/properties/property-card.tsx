@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo, useRef, useState, type MouseEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { BedDouble, Bath, Maximize, MapPin } from "lucide-react";
@@ -8,8 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { FavoriteButton } from "@/components/properties/favorite-button";
 import { cn, formatArea, formatPrice, LISTING_TYPE_LABEL, PROPERTY_STATUS_LABEL, RENTAL_TERM_LABEL } from "@/lib/utils";
 import type { PropertyWithRelations } from "@/types";
-
-const MAX_PREVIEW_IMAGES = 6;
 
 export function PropertyCard({
   property,
@@ -22,26 +19,15 @@ export function PropertyCard({
   priority?: boolean;
   layout?: "grid" | "list";
 }) {
-  const images = useMemo(() => {
-    const cover = property.media.find((m) => m.is_cover) ?? property.media[0];
-    const rest = property.media.filter((m) => m.id !== cover?.id);
-    return [cover, ...rest].filter(Boolean).slice(0, MAX_PREVIEW_IMAGES) as typeof property.media;
-  }, [property.media]);
-
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [hovering, setHovering] = useState(false);
-  const frameRef = useRef<HTMLDivElement>(null);
+  // The card shows the cover photo; hovering it fades in one other photo
+  // (the next one in the gallery order) and fades back out on leave.
+  const cover = property.media.find((m) => m.is_cover) ?? property.media[0];
+  const hoverPhoto = property.media.find((m) => m.id !== cover?.id && m.resource_type === "image");
 
   const locationLabel = [property.neighborhood?.name, property.city?.name].filter(Boolean).join(", ");
   const isNonStandardStatus = property.status !== "available";
   const isList = layout === "list";
-
-  function handleMouseMove(e: MouseEvent<HTMLDivElement>) {
-    if (images.length <= 1 || !frameRef.current) return;
-    const { left, width } = frameRef.current.getBoundingClientRect();
-    const ratio = Math.min(Math.max((e.clientX - left) / width, 0), 0.999);
-    setActiveIndex(Math.floor(ratio * images.length));
-  }
+  const imageSizes = isList ? "(min-width: 640px) 320px, 100vw" : "(min-width: 1280px) 380px, (min-width: 768px) 45vw, 92vw";
 
   return (
     <Link
@@ -52,49 +38,28 @@ export function PropertyCard({
         className,
       )}
     >
-      <div
-        ref={frameRef}
-        onMouseEnter={() => setHovering(true)}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={() => {
-          setHovering(false);
-          setActiveIndex(0);
-        }}
-        className={cn("relative overflow-hidden bg-muted", isList ? "aspect-[4/3] sm:aspect-auto sm:w-80 sm:shrink-0" : "aspect-[4/3]")}
-      >
-        <div
-          className={cn("flex h-full transition-transform duration-500 ease-out", hovering && "scale-95")}
-          style={{ width: `${images.length * 100}%`, transform: `translateX(-${activeIndex * (100 / images.length)}%)` }}
-        >
-          {images.map((media, index) => (
-            <div key={media.id} className="relative h-full shrink-0" style={{ width: `${100 / images.length}%` }}>
-              <Image
-                src={media.secure_url}
-                alt={media.alt_text || property.title}
-                fill
-                sizes={isList ? "(min-width: 640px) 320px, 100vw" : "(min-width: 1280px) 380px, (min-width: 768px) 45vw, 92vw"}
-                className="object-cover"
-                priority={priority && index === 0}
-              />
-            </div>
-          ))}
-        </div>
-
-        {images.length > 1 && (
-          <div className="absolute inset-x-3 top-3 z-10 flex gap-1">
-            {images.map((media, index) => (
-              <span
-                key={media.id}
-                className={cn(
-                  "h-1 flex-1 rounded-full bg-white/40 transition-colors duration-200",
-                  index === activeIndex && "bg-white",
-                )}
-              />
-            ))}
-          </div>
+      <div className={cn("relative overflow-hidden bg-muted", isList ? "aspect-[4/3] sm:aspect-auto sm:w-80 sm:shrink-0" : "aspect-[4/3]")}>
+        {cover && (
+          <Image
+            src={cover.secure_url}
+            alt={cover.alt_text || property.title}
+            fill
+            sizes={imageSizes}
+            className="object-cover"
+            priority={priority}
+          />
+        )}
+        {hoverPhoto && (
+          <Image
+            src={hoverPhoto.secure_url}
+            alt=""
+            fill
+            sizes={imageSizes}
+            className="object-cover opacity-0 transition-opacity duration-700 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none"
+          />
         )}
 
-        <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-between p-3 pt-6">
+        <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-between p-3">
           <div className="flex flex-wrap gap-1.5">
             <Badge className="bg-charcoal text-ivory hover:bg-charcoal">
               {LISTING_TYPE_LABEL[property.listing_type]}
