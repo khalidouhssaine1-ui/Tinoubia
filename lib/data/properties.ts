@@ -213,12 +213,12 @@ export async function incrementPropertyViews(propertyId: string) {
 export async function getCategoryCounts(): Promise<Record<PropertyCategorySlug, number>> {
   const supabase = await createClient();
   const { data } = await supabase.from("property_types").select("slug, properties(count)");
-  const counts: Record<string, number> = { apartments: 0, villas: 0, riads: 0 };
+  const counts: Record<PropertyCategorySlug, number> = {};
   for (const row of data ?? []) {
     const rel = (row as unknown as { slug: string; properties: { count: number }[] }).properties;
     counts[row.slug] = rel?.[0]?.count ?? 0;
   }
-  return counts as Record<PropertyCategorySlug, number>;
+  return counts;
 }
 
 /** Slim query for sitemap generation — RLS already restricts this to publicly visible rows. */

@@ -10,7 +10,8 @@ export type PropertyStatus =
   | "sold"
   | "archived";
 
-export type PropertyCategorySlug = "apartments" | "villas" | "riads";
+/** A `property_types.slug`. Categories are managed from the admin, so any slug is possible. */
+export type PropertyCategorySlug = string;
 
 export type UserRole = "super_admin" | "admin" | "agent" | "editor";
 
@@ -64,6 +65,10 @@ export interface PropertyType {
   name: string;
   slug: PropertyCategorySlug;
   icon: string | null;
+  /** Only loaded where categories are listed (admin, homepage cards). */
+  description?: string | null;
+  image_url?: string | null;
+  sort_order?: number;
 }
 
 export interface Feature {

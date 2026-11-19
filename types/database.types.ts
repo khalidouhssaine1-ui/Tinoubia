@@ -715,24 +715,33 @@ export type Database = {
       property_types: {
         Row: {
           created_at: string
+          description: string | null
           icon: string | null
           id: string
+          image_url: string | null
           name: string
           slug: string
+          sort_order: number
         }
         Insert: {
           created_at?: string
+          description?: string | null
           icon?: string | null
           id?: string
+          image_url?: string | null
           name: string
           slug: string
+          sort_order?: number
         }
         Update: {
           created_at?: string
+          description?: string | null
           icon?: string | null
           id?: string
+          image_url?: string | null
           name?: string
           slug?: string
+          sort_order?: number
         }
         Relationships: []
       }

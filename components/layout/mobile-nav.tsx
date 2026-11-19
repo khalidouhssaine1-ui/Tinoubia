@@ -13,10 +13,10 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/layout/logo";
-import { MAIN_NAV, AGENCY_PHONE_DISPLAY, whatsappLink } from "@/lib/nav-config";
+import { AGENCY_PHONE_DISPLAY, whatsappLink, type NavItem } from "@/lib/nav-config";
 import { cn } from "@/lib/utils";
 
-export function MobileNav() {
+export function MobileNav({ nav }: { nav: NavItem[] }) {
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
 
@@ -41,7 +41,7 @@ export function MobileNav() {
         </SheetHeader>
 
         <nav className="flex flex-col px-4 py-4">
-          {MAIN_NAV.map((item) => (
+          {nav.map((item) => (
             <div key={item.href} className="border-b border-white/5 last:border-none">
               {item.children ? (
                 <button

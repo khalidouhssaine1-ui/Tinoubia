@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { contactSchema } from "@/lib/validations/contact.schema";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { isRateLimited } from "@/lib/rate-limit";
 import { sendNotificationEmail } from "@/lib/email/send";
 import { contactNotificationHtml } from "@/lib/email/templates";
@@ -28,7 +28,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  const supabase = createAdminClient();
+  // Server-side anon client, like property enquiries: the public lead-insert
+  // RLS policy (migration 0008) accepts clean `new` contact-page leads, so this
+  // route doesn't need the service-role key.
+  const supabase = await createClient();
   const { error: insertError } = await supabase.from("leads").insert({
     property_id: null,
     full_name: values.fullName,
@@ -36,6 +39,7 @@ export async function POST(request: NextRequest) {
     email: values.email,
     preferred_contact: "email",
     message: values.message,
+    status: "new",
     source: "contact_page",
     ip_address: ip,
   });

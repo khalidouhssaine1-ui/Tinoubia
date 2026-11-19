@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { SearchBar } from "@/components/home/search-bar";
 
-export function Hero() {
+export function Hero({ categories }: { categories: { slug: string; name: string }[] }) {
   return (
     <section className="relative flex min-h-[92vh] items-end overflow-hidden bg-charcoal pb-16 pt-40 sm:pb-24">
       <Image
@@ -48,7 +48,7 @@ export function Hero() {
           </Button>
         </div>
 
-        <SearchBar className="mt-10" />
+        <SearchBar className="mt-10" categories={categories} />
       </div>
     </section>
   );

@@ -4,6 +4,7 @@ import { PropertyToolbar } from "@/components/properties/property-toolbar";
 import { PropertyResults } from "@/components/properties/property-results";
 import { PaginationControls } from "@/components/properties/pagination-controls";
 import { queryProperties } from "@/lib/data/properties";
+import { getCategories } from "@/lib/data/categories";
 import type { PropertyFilters } from "@/types";
 
 interface Crumb {
@@ -28,7 +29,10 @@ export async function PropertyListingPage({
   lockListingType?: boolean;
   lockCategory?: boolean;
 }) {
-  const { data, count, page, pageSize } = await queryProperties({ ...filters, pageSize: 12 });
+  const [{ data, count, page, pageSize }, categories] = await Promise.all([
+    queryProperties({ ...filters, pageSize: 12 }),
+    getCategories(),
+  ]);
   const totalPages = Math.max(1, Math.ceil(count / pageSize));
 
   return (
@@ -47,6 +51,7 @@ export async function PropertyListingPage({
             filters={filters}
             lockListingType={lockListingType}
             lockCategory={lockCategory}
+            categories={categories}
           />
 
           <div className="min-w-0 flex-1">

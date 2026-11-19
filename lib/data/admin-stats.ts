@@ -8,6 +8,8 @@ export interface DashboardStats {
   forRent: number;
   totalLeads: number;
   newLeads: number;
+  /** Property page visits, summed across every listing. */
+  totalViews: number;
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
@@ -16,7 +18,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   const [{ count: total }, statusRows, { count: forSale }, { count: forRent }, { count: totalLeads }, { count: newLeads }] =
     await Promise.all([
       supabase.from("properties").select("*", { count: "exact", head: true }),
-      supabase.from("properties").select("status"),
+      supabase.from("properties").select("status, views_count"),
       supabase.from("properties").select("*", { count: "exact", head: true }).eq("listing_type", "sale"),
       supabase.from("properties").select("*", { count: "exact", head: true }).eq("listing_type", "rent"),
       supabase.from("leads").select("*", { count: "exact", head: true }),
@@ -31,9 +33,11 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     sold: 0,
     archived: 0,
   };
+  let totalViews = 0;
   for (const row of statusRows.data ?? []) {
-    const status = (row as { status: string }).status;
+    const { status, views_count } = row as { status: string; views_count: number | null };
     byStatus[status] = (byStatus[status] ?? 0) + 1;
+    totalViews += views_count ?? 0;
   }
 
   return {
@@ -43,6 +47,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     forRent: forRent ?? 0,
     totalLeads: totalLeads ?? 0,
     newLeads: newLeads ?? 0,
+    totalViews,
   };
 }
 

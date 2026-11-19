@@ -1,17 +1,18 @@
 import type { MetadataRoute } from "next";
 import { getAllPublicPropertySlugs } from "@/lib/data/properties";
 import { getCitiesWithCounts, getNeighborhoodsWithProperties } from "@/lib/data/locations";
+import { getCategories } from "@/lib/data/categories";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
-const CATEGORIES = ["apartments", "villas", "riads"];
 const TYPES = ["for-sale", "for-rent"];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [properties, cities, neighborhoods] = await Promise.all([
+  const [properties, cities, neighborhoods, categories] = await Promise.all([
     getAllPublicPropertySlugs(),
     getCitiesWithCounts(),
     getNeighborhoodsWithProperties(),
+    getCategories(),
   ]);
 
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -23,9 +24,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/contact`, changeFrequency: "monthly", priority: 0.5 },
   ];
 
-  const categoryRoutes: MetadataRoute.Sitemap = CATEGORIES.flatMap((category) =>
+  const categoryRoutes: MetadataRoute.Sitemap = categories.flatMap((category) =>
     TYPES.map((type) => ({
-      url: `${SITE_URL}/properties/${category}/${type}`,
+      url: `${SITE_URL}/properties/${category.slug}/${type}`,
       changeFrequency: "daily" as const,
       priority: 0.8,
     })),

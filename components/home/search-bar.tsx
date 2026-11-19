@@ -13,7 +13,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export function SearchBar({ className }: { className?: string }) {
+export function SearchBar({
+  className,
+  categories,
+}: {
+  className?: string;
+  categories: { slug: string; name: string }[];
+}) {
   const router = useRouter();
   const [listingType, setListingType] = useState("sale");
   const [rentalTerm, setRentalTerm] = useState("any");
@@ -66,9 +72,9 @@ export function SearchBar({ className }: { className?: string }) {
             <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="any">Any</SelectItem>
-              <SelectItem value="apartments">Apartments</SelectItem>
-              <SelectItem value="villas">Villas</SelectItem>
-              <SelectItem value="riads">Riads</SelectItem>
+              {categories.map((c) => (
+                <SelectItem key={c.slug} value={c.slug}>{c.name}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </Field>

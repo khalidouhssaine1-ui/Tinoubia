@@ -9,26 +9,23 @@ export interface NavItem {
   children?: NavChild[];
 }
 
-const SALE_CHILDREN: NavChild[] = [
-  { label: "Apartments", href: "/properties/apartments/for-sale" },
-  { label: "Villas", href: "/properties/villas/for-sale" },
-  { label: "Riads", href: "/properties/riads/for-sale" },
-];
+/**
+ * The main menu. The "For Sale" / "For Rent" dropdowns list the categories
+ * managed in the admin, so a new category appears here automatically.
+ */
+export function buildMainNav(categories: { slug: string; name: string }[]): NavItem[] {
+  const children = (type: "for-sale" | "for-rent"): NavChild[] =>
+    categories.map((c) => ({ label: c.name, href: `/properties/${c.slug}/${type}` }));
 
-const RENT_CHILDREN: NavChild[] = [
-  { label: "Apartments", href: "/properties/apartments/for-rent" },
-  { label: "Villas", href: "/properties/villas/for-rent" },
-  { label: "Riads", href: "/properties/riads/for-rent" },
-];
-
-export const MAIN_NAV: NavItem[] = [
-  { label: "Home", href: "/" },
-  { label: "For Sale", href: "/for-sale", children: SALE_CHILDREN },
-  { label: "For Rent", href: "/for-rent", children: RENT_CHILDREN },
-  { label: "Properties", href: "/properties" },
-  { label: "About", href: "/about" },
-  { label: "Contact", href: "/contact" },
-];
+  return [
+    { label: "Home", href: "/" },
+    { label: "For Sale", href: "/for-sale", children: children("for-sale") },
+    { label: "For Rent", href: "/for-rent", children: children("for-rent") },
+    { label: "Properties", href: "/properties" },
+    { label: "About", href: "/about" },
+    { label: "Contact", href: "/contact" },
+  ];
+}
 
 // wa.me needs digits only, country code, no "+". Env var overrides if set.
 export const AGENCY_WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "212607157847";

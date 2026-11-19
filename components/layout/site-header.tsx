@@ -6,10 +6,10 @@ import { Logo } from "@/components/layout/logo";
 import { NavDropdown } from "@/components/layout/nav-dropdown";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { Button } from "@/components/ui/button";
-import { MAIN_NAV, whatsappLink } from "@/lib/nav-config";
+import { whatsappLink, type NavItem } from "@/lib/nav-config";
 import { cn } from "@/lib/utils";
 
-export function SiteHeader() {
+export function SiteHeader({ nav }: { nav: NavItem[] }) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -34,7 +34,7 @@ export function SiteHeader() {
         <Logo light={light} />
 
         <nav className="hidden lg:flex items-center gap-8">
-          {MAIN_NAV.map((item) => (
+          {nav.map((item) => (
             <NavDropdown key={item.href} item={item} light={light} />
           ))}
         </nav>
@@ -53,7 +53,7 @@ export function SiteHeader() {
             WhatsApp
           </Button>
           <div className={cn(!light ? "text-charcoal" : "text-white")}>
-            <MobileNav />
+            <MobileNav nav={nav} />
           </div>
         </div>
       </div>

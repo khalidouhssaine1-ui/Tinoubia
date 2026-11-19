@@ -43,11 +43,13 @@ export function PropertyFiltersPanel({
   filters,
   lockListingType = false,
   lockCategory = false,
+  categories,
 }: {
   basePath: string;
   filters: PropertyFilters;
   lockListingType?: boolean;
   lockCategory?: boolean;
+  categories: { slug: string; name: string }[];
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -130,9 +132,9 @@ export function PropertyFiltersPanel({
             <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="any">Any</SelectItem>
-              <SelectItem value="apartments">Apartments</SelectItem>
-              <SelectItem value="villas">Villas</SelectItem>
-              <SelectItem value="riads">Riads</SelectItem>
+              {categories.map((c) => (
+                <SelectItem key={c.slug} value={c.slug}>{c.name}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </Field>

@@ -1,10 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
+import { sortCategories } from "@/lib/data/categories";
 import type { Agent, City, Country, Feature, Neighborhood, PropertyType } from "@/types";
 
 export async function getPropertyTypesLookup(): Promise<PropertyType[]> {
   const supabase = await createClient();
-  const { data } = await supabase.from("property_types").select("*").order("name");
-  return (data ?? []) as PropertyType[];
+  const { data } = await supabase.from("property_types").select("*");
+  return sortCategories((data ?? []) as PropertyType[]);
 }
 
 export async function getFeaturesLookup(): Promise<Feature[]> {

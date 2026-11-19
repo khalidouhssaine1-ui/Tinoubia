@@ -10,8 +10,7 @@ A premium real-estate platform for apartment, villa and riad sales and rentals i
 - **Supabase** — Postgres, Auth, Row Level Security
 - **Cloudinary** — signed uploads for property photos/videos and PDF brochures
 - **React Hook Form** + **Zod** — every form, client- and server-validated
-- **Google Maps JavaScript API** — property location picker (admin)
-- **Leaflet + OpenStreetMap** — public property maps and the listings map view (no API key)
+- **Leaflet + OpenStreetMap** — public property maps, the listings map view and the admin location picker (no API key)
 - **Email notifications** — Resend, Gmail SMTP or SendPulse server-side, with a FormSubmit fallback from the visitor's browser (see below)
 - **Framer Motion** — scroll reveals, page/drawer/modal transitions (respects `prefers-reduced-motion`)
 
@@ -36,9 +35,8 @@ Copy `.env.local.example` to `.env.local` and fill in:
 | `NEXT_PUBLIC_SITE_URL` | Your deployed URL (`http://localhost:3000` in dev) |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase → Project Settings → API |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → Project Settings → API (publishable/anon key) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API → **service_role** secret. **Never expose this to the browser.** Required for the contact-page form and admin user management. (Property enquiries don't need it — they insert through the public `leads_insert_public` RLS policy.) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API → **service_role** secret. **Never expose this to the browser.** Required for admin user management (inviting users). The enquiry and contact forms don't need it — they insert through the public `leads_insert_public` RLS policy. |
 | `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` | Cloudinary dashboard → Settings → API Keys |
-| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Google Cloud Console → enable "Maps JavaScript API" (admin location picker only) |
 | `CONTACT_EMAIL` | Where enquiry notifications are sent (defaults to `hmounayt17@gmail.com`) |
 | `RESEND_API_KEY` / `RESEND_FROM` | *Optional, email option 1.* Resend → API Keys; `RESEND_FROM` is the verified sender (defaults to Resend's onboarding address) |
 | `GMAIL_USER` / `GMAIL_APP_PASSWORD` | *Optional, email option 2.* A Gmail address and a Google App Password for it |
@@ -51,7 +49,7 @@ Copy `.env.local.example` to `.env.local` and fill in:
 
 Every enquiry and contact message is saved to the `leads` table first, so nothing is lost if email fails. The notification then goes out through the first configured option in `lib/email/send.ts`: **Resend → Gmail SMTP → SendPulse**. If none of them sends it, the API answers `emailed: false` and the visitor's browser sends the notification through **FormSubmit** instead (FormSubmit blocks requests from server IPs, so it can only run client-side).
 
-Until Cloudinary/Google Maps/email keys are supplied, the app degrades gracefully: media upload shows a configuration notice, the admin location picker can't load, and enquiry emails fall through to FormSubmit or are skipped with a server-side warning (the enquiry itself is still saved to the database).
+Until Cloudinary/email keys are supplied, the app degrades gracefully: media upload shows a configuration notice, and enquiry emails fall through to FormSubmit or are skipped with a server-side warning (the enquiry itself is still saved to the database).
 
 ## Database
 
@@ -64,6 +62,7 @@ The Supabase project's schema lives in `supabase/migrations/`, applied in order:
 5. `0005_allow_public_lead_inserts.sql` — lets anonymous visitors insert clean `new` website leads (reads stay staff-only)
 6. `0006_property_brochure.sql` — optional PDF brochure per property (`brochure_url`, `brochure_public_id`)
 7. `0007_instagram_videos.sql` — the `instagram_videos` table shown on the homepage
+8. `0008_category_details_and_contact_leads.sql` — description, photo and display order for categories (managed in Admin → Categories), and lets the contact form save leads without the service-role key
 
 Run them against a fresh Supabase project via the Supabase CLI (`supabase db push`) or the Supabase SQL editor, in order.
 

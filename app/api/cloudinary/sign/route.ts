@@ -5,6 +5,7 @@ import { createSignedUploadParams } from "@/lib/cloudinary/sign";
 const FOLDERS: Record<string, string> = {
   properties: "tinoubia/properties",
   brochures: "tinoubia/brochures",
+  categories: "tinoubia/categories",
 };
 
 export async function POST(request: NextRequest) {

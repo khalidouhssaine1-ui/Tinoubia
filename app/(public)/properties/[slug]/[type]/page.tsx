@@ -2,13 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PropertyListingPage } from "@/components/properties/property-listing-page";
 import { parseFiltersFromSearchParams } from "@/lib/search-params";
-import type { ListingType, PropertyCategorySlug } from "@/types";
-
-const CATEGORIES: Record<string, { slug: PropertyCategorySlug; label: string }> = {
-  apartments: { slug: "apartments", label: "Apartments" },
-  villas: { slug: "villas", label: "Villas" },
-  riads: { slug: "riads", label: "Riads" },
-};
+import { getCategoryBySlug } from "@/lib/data/categories";
+import type { ListingType } from "@/types";
 
 const TYPES: Record<string, { listingType: ListingType; label: string }> = {
   "for-sale": { listingType: "sale", label: "for Sale" },
@@ -20,16 +15,17 @@ interface Params {
   type: string;
 }
 
-function resolveParams(params: Params) {
-  const category = CATEGORIES[params.slug];
+async function resolveParams(params: Params) {
   const type = TYPES[params.type];
-  if (!category || !type) return null;
-  return { category, type };
+  if (!type) return null;
+  const category = await getCategoryBySlug(params.slug);
+  if (!category) return null;
+  return { category: { slug: category.slug, label: category.name }, type };
 }
 
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const rawParams = await params;
-  const resolved = resolveParams(rawParams);
+  const resolved = await resolveParams(rawParams);
   if (!resolved) return {};
   return {
     title: `${resolved.category.label} ${resolved.type.label}`,
@@ -45,7 +41,7 @@ export default async function CategoryListingPage({
   params: Promise<Params>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const resolved = resolveParams(await params);
+  const resolved = await resolveParams(await params);
   if (!resolved) notFound();
   const { category, type } = resolved;
 

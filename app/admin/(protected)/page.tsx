@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Building2, Home, KeyRound, ShoppingBag, Inbox, MailPlus, FileEdit, Star } from "lucide-react";
+import { Building2, Home, KeyRound, ShoppingBag, Inbox, MailPlus, FileEdit, Star, Eye } from "lucide-react";
 import { StatCard } from "@/components/admin/stat-card";
 import { StatusChart } from "@/components/admin/status-chart";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +25,7 @@ export default async function AdminDashboardPage() {
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         <StatCard label="Total Properties" value={stats.total} icon={Building2} tone="bronze" />
+        <StatCard label="Property Page Views" value={stats.totalViews} icon={Eye} tone="bronze" />
         <StatCard label="Available" value={stats.byStatus.available} icon={Home} />
         <StatCard label="Reserved" value={stats.byStatus.reserved} icon={FileEdit} />
         <StatCard label="Rented" value={stats.byStatus.rented} icon={KeyRound} />

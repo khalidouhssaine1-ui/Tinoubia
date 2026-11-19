@@ -4,28 +4,24 @@ import { FaFacebookF, FaInstagram } from "react-icons/fa";
 import { Logo } from "@/components/layout/logo";
 import { AGENCY_EMAIL, AGENCY_PHONE_DISPLAY, whatsappLink } from "@/lib/nav-config";
 
-const columns = [
-  {
-    title: "Explore",
-    links: [
-      { label: "For Sale", href: "/for-sale" },
-      { label: "For Rent", href: "/for-rent" },
-      { label: "All Properties", href: "/properties" },
-      { label: "About Us", href: "/about" },
-      { label: "Contact", href: "/contact" },
-    ],
-  },
-  {
-    title: "Categories",
-    links: [
-      { label: "Apartments", href: "/properties/apartments/for-sale" },
-      { label: "Villas", href: "/properties/villas/for-sale" },
-      { label: "Riads", href: "/properties/riads/for-sale" },
-    ],
-  },
-];
+export function SiteFooter({ categories }: { categories: { slug: string; name: string }[] }) {
+  const columns = [
+    {
+      title: "Explore",
+      links: [
+        { label: "For Sale", href: "/for-sale" },
+        { label: "For Rent", href: "/for-rent" },
+        { label: "All Properties", href: "/properties" },
+        { label: "About Us", href: "/about" },
+        { label: "Contact", href: "/contact" },
+      ],
+    },
+    {
+      title: "Categories",
+      links: categories.map((c) => ({ label: c.name, href: `/properties/${c.slug}/for-sale` })),
+    },
+  ];
 
-export function SiteFooter() {
   return (
     <footer className="bg-charcoal text-ivory">
       <div className="container-luxe grid gap-10 py-10 md:py-12 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]">

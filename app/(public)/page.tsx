@@ -9,18 +9,20 @@ import { ContactCta } from "@/components/home/contact-cta";
 import { InstagramVideos } from "@/components/home/instagram-videos";
 import { getFeaturedProperties, getLatestProperties } from "@/lib/data/properties";
 import { getInstagramVideos } from "@/lib/data/videos";
+import { getCategories } from "@/lib/data/categories";
 
 export default async function HomePage() {
-  const [featured, forSale, forRent, videos] = await Promise.all([
+  const [featured, forSale, forRent, videos, categories] = await Promise.all([
     getFeaturedProperties(10),
     getLatestProperties(10, "sale"),
     getLatestProperties(10, "rent"),
     getInstagramVideos(8),
+    getCategories(),
   ]);
 
   return (
     <>
-      <Hero />
+      <Hero categories={categories} />
 
       <PropertySection
         eyebrow="Handpicked"
