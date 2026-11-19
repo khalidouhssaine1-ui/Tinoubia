@@ -17,7 +17,10 @@ export default function cloudinaryImageLoader({
 
   if (src.includes("res.cloudinary.com")) {
     const q = quality ?? "auto";
-    return src.replace("/upload/", `/upload/f_auto,q_${q},w_${width}/`);
+    // c_limit: never upscale past the original. Without it a small photo
+    // (e.g. 900px wide) asked for at w_3840 is blown up past Cloudinary's
+    // 25-megapixel cap and the request fails with HTTP 400.
+    return src.replace("/upload/", `/upload/f_auto,q_${q},c_limit,w_${width}/`);
   }
 
   // Unsplash (demo seed data) already supports its own resize query params.
