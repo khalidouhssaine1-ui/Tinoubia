@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 /**
  * Called from the root proxy.ts on every /admin request: refreshes the
  * Supabase session cookie and redirects unauthenticated visitors away from
- * /admin (except /admin/login).
+ * /admin (except the login and password-reset pages).
  * This is the server-side gate — page/layout code re-checks role on top of it,
  * so this proxy is not the only line of defense, just the first one.
  */
@@ -35,7 +35,11 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-  const isAdminRoute = path.startsWith("/admin") && path !== "/admin/login";
+  // Pages a signed-out visitor must be able to reach: sign in, request a
+  // password reset, and the reset link's landing route.
+  const isPublicAdminPath =
+    path === "/admin/login" || path === "/admin/forgot-password" || path === "/admin/auth/callback";
+  const isAdminRoute = path.startsWith("/admin") && !isPublicAdminPath;
 
   if (isAdminRoute && !user) {
     const redirectUrl = new URL("/admin/login", request.url);

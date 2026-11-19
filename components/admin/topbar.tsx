@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Menu, LogOut, ExternalLink } from "lucide-react";
+import { Menu, LogOut, ExternalLink, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { AdminSidebar } from "@/components/admin/sidebar";
@@ -62,6 +62,9 @@ export function AdminTopbar({ profile }: { profile: Profile }) {
             <p className="text-xs capitalize text-muted-foreground">{profile.role.replace("_", " ")}</p>
           </div>
           <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => router.push("/admin/account")} className="gap-2">
+            <KeyRound className="size-4" /> My Account &amp; Password
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={handleSignOut} className="gap-2 text-destructive">
             <LogOut className="size-4" /> Sign Out
           </DropdownMenuItem>

@@ -87,6 +87,18 @@ This project doesn't ship a seed super-admin (creating live login credentials is
    values ('<user-id-from-auth-users>', 'Your Name', 'you@example.com', 'super_admin', true);
    ```
 
+### Passwords
+
+- **Change it:** signed-in staff open the account menu (top right) → **My Account & Password**.
+- **Forgot it:** the login page's **Forgot password?** link emails a reset link that lands on `/admin/auth/callback` and then My Account. The link only works in the browser that requested it. Supabase's built-in mailer only delivers to members of the Supabase organization, so for anyone else turn on **Authentication → Emails → SMTP Settings** (for example with the Gmail address and App Password used for enquiry emails). The project's Site URL must be the live domain (Authentication → URL Configuration), or the link will point to the wrong site.
+- **Locked out with no email access:** run this in the Supabase SQL editor, with the account's email and a new password of your choice:
+
+  ```sql
+  update auth.users
+  set encrypted_password = extensions.crypt('NEW-PASSWORD', extensions.gen_salt('bf')), updated_at = now()
+  where email = 'admin@example.com';
+  ```
+
 ## Project Structure
 
 ```

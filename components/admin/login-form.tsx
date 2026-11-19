@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -66,9 +67,14 @@ export function LoginForm() {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="password" className="text-xs uppercase tracking-wide text-muted-foreground">
-          Password
-        </Label>
+        <div className="flex items-baseline justify-between">
+          <Label htmlFor="password" className="text-xs uppercase tracking-wide text-muted-foreground">
+            Password
+          </Label>
+          <Link href="/admin/forgot-password" className="text-xs text-muted-foreground hover:text-bronze">
+            Forgot password?
+          </Link>
+        </div>
         <Input id="password" type="password" autoComplete="current-password" {...register("password")} />
         {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
       </div>

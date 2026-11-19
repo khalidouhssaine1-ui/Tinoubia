@@ -13,7 +13,7 @@ export default function AdminLoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-charcoal px-4">
       <div className="w-full max-w-sm rounded-2xl bg-card p-8 shadow-2xl">
-        <div className="flex flex-col items-center gap-2 text-center">
+        <div className="mb-6 flex flex-col items-center gap-2 text-center">
           <Link href="/">
             <Image src="/logo.png" alt="Tinoubia Immobilier" width={228} height={150} className="h-14 w-auto" unoptimized />
           </Link>
